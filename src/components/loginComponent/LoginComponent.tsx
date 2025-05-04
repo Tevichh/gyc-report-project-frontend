@@ -7,11 +7,11 @@ export const LoginComponent = () => {
                 </div>
                 <h1 className="text-3xl font-bold text-center mb-2">Sign In</h1>
                 <p className="text-center text-gray-600 mb-6">
-                    Enter your email and password to Sign In.
+                    Ingresa tu correo y contraseña para ingresar.
                 </p>
 
                 <div className="mb-4">
-                    <label className="block mb-1 font-medium">Your email</label>
+                    <label className="block mb-1 font-medium">Email</label>
                     <input
                         type="email"
                         placeholder="name@mail.com"
@@ -35,11 +35,11 @@ export const LoginComponent = () => {
                     SIGN IN
                 </button>
 
-                <div className="flex justify-between items-center text-sm text-gray-700">
+                {/* <div className="flex justify-between items-center text-sm text-gray-700">
                     <a href="#" className="font-medium">
                         Forgot Password
                     </a>
-                </div>
+                </div> */}
             </form>
         </div>
     );

@@ -6,6 +6,7 @@ import "flowbite";
 import { DashboardComponent } from "./components/dashboardComponent/DashboardComponent";
 import { PerfilComponent } from "./components/perfilComponent/PerfilComponent";
 import { ReportComponent } from "./components/reportComponent/ReportComponent";
+import PrivateRoute from "./auth/guards/PrivateRoute";
 
 function App() {
   const location = useLocation();
@@ -20,7 +21,11 @@ function App() {
       <main className={!isLoginPage ? "mainContent p-4 sm:ml-64" : ""}>
         <div className={!isLoginPage ? "p-4 border-2 border-gray-200 rounded-lg mt-14 h-150" : ""}>
           <Routes>
-            <Route path="/" element={<PerfilComponent />} />
+            <Route path="/" element={
+              <PrivateRoute>
+                <PerfilComponent />
+              </PrivateRoute>
+            } />
             <Route path="/dashboard" element={<DashboardComponent />} />
             <Route path="/reports" element={<ReportComponent />} />
             <Route path="/login" element={<LoginComponent />} />
