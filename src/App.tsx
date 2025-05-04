@@ -7,6 +7,7 @@ import { DashboardComponent } from "./components/dashboardComponent/DashboardCom
 import { PerfilComponent } from "./components/perfilComponent/PerfilComponent";
 import { ReportComponent } from "./components/reportComponent/ReportComponent";
 import PrivateRoute from "./auth/guards/PrivateRoute";
+import LoggedRoute from "./auth/guards/LoggedRoute";
 
 function App() {
   const location = useLocation();
@@ -26,9 +27,21 @@ function App() {
                 <PerfilComponent />
               </PrivateRoute>
             } />
-            <Route path="/dashboard" element={<DashboardComponent />} />
-            <Route path="/reports" element={<ReportComponent />} />
-            <Route path="/login" element={<LoginComponent />} />
+            <Route path="/dashboard" element={
+              <PrivateRoute>
+                <DashboardComponent />
+              </PrivateRoute>
+            } />
+            <Route path="/reports" element={
+              <PrivateRoute>
+                <ReportComponent />
+              </PrivateRoute>
+            } />
+            <Route path="/login" element={
+              <LoggedRoute>
+                <LoginComponent />
+              </LoggedRoute>
+            } />
           </Routes>
         </div>
       </main>

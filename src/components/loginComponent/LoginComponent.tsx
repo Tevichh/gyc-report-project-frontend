@@ -1,7 +1,25 @@
+import { useState } from "react";
+import { login } from "../../services/authService";
+
 export const LoginComponent = () => {
+
+    const [user, setUser] = useState("");
+    const [password, setPassword] = useState("");
+
+    const handleLogin = async (event: React.FormEvent) => {
+        event.preventDefault();
+        try {
+            await login(user, password);
+            window.location.href = "/dashboard";
+        } catch (err) {
+            alert("Login failed");
+        }
+    };
+
+
     return (
         <div className="flex justify-center items-center h-screen bg-gray-100">
-            <form className="w-full max-w-md bg-white p-8 rounded-lg shadow">
+            <form className="w-full max-w-md bg-white p-8 rounded-lg shadow" onSubmit={handleLogin}>
                 <div className="flex mb-10">
                     <img src="./src/assets/logogyc.png" className="h-20" alt="Logo" />
                 </div>
@@ -16,6 +34,8 @@ export const LoginComponent = () => {
                         type="email"
                         placeholder="name@mail.com"
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        value={user}
+                        onChange={(e) => setUser(e.target.value)}
                     />
                 </div>
 
@@ -25,6 +45,8 @@ export const LoginComponent = () => {
                         type="password"
                         placeholder="********"
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
 
