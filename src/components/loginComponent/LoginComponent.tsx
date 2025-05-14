@@ -5,14 +5,15 @@ export const LoginComponent = () => {
 
     const [user, setUser] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState<string | null>(null);
 
     const handleLogin = async (event: React.FormEvent) => {
         event.preventDefault();
         try {
             await login(user, password);
-            window.location.href = "/dashboard";
+            window.location.href = "/";
         } catch (err) {
-            alert("Login failed");
+            setError("Invalid email or password. Please try again.");
         }
     };
 
@@ -49,6 +50,8 @@ export const LoginComponent = () => {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
+
+                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
                 <button
                     type="submit"

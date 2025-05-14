@@ -1,8 +1,17 @@
 import { UserInfo } from "../../models/userInfo.interface";
 
-export const PerfilComponent = () => {
+type PerfilComponentProps = {
+  userInfo: UserInfo | null;
+};
 
-  const userInfo: UserInfo = {
+
+export const PerfilComponent = ({ userInfo }: PerfilComponentProps) => {
+
+  if (!userInfo) {
+    return <div className="text-center text-gray-500">Cargando...</div>;
+  }
+
+  /* const userInfo: UserInfo = {
 
     nombres: "Juan Carlos",
     apellidos: "Pérez Gómez",
@@ -13,7 +22,8 @@ export const PerfilComponent = () => {
     urlFoto: "https://flowbite.com/docs/images/people/profile-picture-5.jpg",
     region: "Región 1",
 
-  }
+  } */
+
   return (
     <div className="flex justify-center">
       <div className="w-full bg-blue-900 rounded-lg shadow-lg h-70">

@@ -8,10 +8,33 @@ import { PerfilComponent } from "./components/perfilComponent/PerfilComponent";
 import { ReportComponent } from "./components/reportComponent/ReportComponent";
 import PrivateRoute from "./auth/guards/PrivateRoute";
 import LoggedRoute from "./auth/guards/LoggedRoute";
+import { useEffect, useState } from "react";
+import { getAllUsers, getUser } from "./services/userService";
+import { UserInfo } from "./models/userInfo.interface";
+import { UsersComponent } from "./components/usersComponent/UsersComponent";
 
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [users, setUsers] = useState<UserInfo[]>([]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+      if (token && userId) {
+        const user = await getUser(userId);
+        const allUsers = await getAllUsers();
+
+        setUser(user);
+        setUsers(allUsers);
+      }
+    };
+
+    fetchUser();
+  }, [isLoginPage]);
+
 
   return (
     <div className="mainContainer">
@@ -24,7 +47,12 @@ function App() {
           <Routes>
             <Route path="/" element={
               <PrivateRoute>
-                <PerfilComponent />
+                <PerfilComponent userInfo={user} />
+              </PrivateRoute>
+            } />
+            <Route path="/users" element={
+              <PrivateRoute>
+                <UsersComponent users={users} />
               </PrivateRoute>
             } />
             <Route path="/dashboard" element={

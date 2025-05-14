@@ -1,5 +1,6 @@
 export interface LoginResponse {
     token: string;
+    userId: string;
   }
   
   export interface TokenPayload {
