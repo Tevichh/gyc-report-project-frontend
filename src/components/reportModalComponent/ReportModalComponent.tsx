@@ -11,7 +11,7 @@ type ReportModalProps = {
 
 export const ReportModalComponent = ({ edit, report, isOpen, handleModal }: ReportModalProps) => {
     const [formData, setFormData] = useState({
-        ticket: report?.ticket || "",
+        ticket: report?.NoTicket || "",
         sistema: report?.sistema || "",
         zona: report?.zona || "",
         locacion: report?.locacion || "",

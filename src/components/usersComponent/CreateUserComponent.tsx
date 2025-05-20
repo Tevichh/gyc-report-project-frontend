@@ -4,7 +4,7 @@ import { useState } from "react"
 import { UserInfo } from "../../models/userInfo.interface"
 import { X } from "lucide-react"
 
-export const CreateUserComponent = ({ users, setUsers }: any) => {
+export const CreateUserComponent = ({ users, setUsers, }: any) => {
 
     const [newUser, setNewUser] = useState<Partial<UserInfo>>({
         nombres: "",
