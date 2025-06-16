@@ -6,6 +6,8 @@ export interface UserInfo {
     cargo: string;
     telefono: string;
     direccion: string;
+    rol: string;
     urlFoto?: string;
     region?: string;
+    email: string;
 }

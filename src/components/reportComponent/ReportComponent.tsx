@@ -1,7 +1,7 @@
 import { FileText, FolderPlus } from "lucide-react"
 import { useState } from "react";
-import { ReportModalComponent } from "../reportModalComponent/ReportModalComponent";
 import { TableComponent } from "./TableComponent";
+import { ReportModalComponent } from "../reportModalComponent/ReportModalComponent";
 
 export const ReportComponent = () => {
 

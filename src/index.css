@@ -1,2 +1,4 @@
 @import "tailwindcss";
 @import "flowbite";
+@import "leaflet/dist/leaflet.css";
+

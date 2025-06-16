@@ -1,32 +1,36 @@
 import { CircleUserRound, FileSpreadsheet, LayoutDashboard, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom"
 
-export const AsideNavComponent = () => {
+export const AsideNavComponent = ({ rol }: { rol: string }) => {
     const location = useLocation();
 
     const navItems = [
         {
             to: "/", label: "Perfil", icon: (
-                <CircleUserRound className="w-6 h-6 transition duration-75" aria-hidden="true"/>
+                <CircleUserRound className="w-6 h-6 transition duration-75" aria-hidden="true" />
 
             )
         },
         {
-            to: "/dashboard", label: "Dashboard", icon: (
-                <LayoutDashboard className="w-6 h-6 transition duration-75" aria-hidden="true"/>
-            )
-        },
-        {
-            to: "/users", label: "Usuarios", icon: (
-                <Users className="w-6 h-6 transition duration-75" aria-hidden="true"/>
-            )
-        },
-        {
             to: "/reports", label: "Reportes", icon: (
-                <FileSpreadsheet className="w-6 h-6 transition duration-75" aria-hidden="true"/>
+                <FileSpreadsheet className="w-6 h-6 transition duration-75" aria-hidden="true" />
             )
         },
     ];
+    if (rol === "administrador") {
+        navItems.push(
+            {
+                to: "/users", label: "Usuarios", icon: (
+                    <Users className="w-6 h-6 transition duration-75" aria-hidden="true" />
+                )
+            },
+            {
+                to: "/dashboard", label: "Dashboard", icon: (
+                    <LayoutDashboard className="w-6 h-6 transition duration-75" aria-hidden="true" />
+                )
+            }
+        );
+    }
 
     return (
         <div className="asideNavComponent">

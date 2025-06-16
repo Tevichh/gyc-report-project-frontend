@@ -1,3 +1,4 @@
+import { ShieldUser, User } from "lucide-react";
 import { UserInfo } from "../../models/userInfo.interface";
 
 type PerfilComponentProps = {
@@ -11,19 +12,6 @@ export const PerfilComponent = ({ userInfo }: PerfilComponentProps) => {
     return <div className="text-center text-gray-500">Cargando...</div>;
   }
 
-  /* const userInfo: UserInfo = {
-
-    nombres: "Juan Carlos",
-    apellidos: "Pérez Gómez",
-    cedula: "12345678",
-    cargo: "Técnico",
-    telefono: "0987654321",
-    direccion: "Calle 123, Barrio Centro, Ciudad",
-    urlFoto: "https://flowbite.com/docs/images/people/profile-picture-5.jpg",
-    region: "Región 1",
-
-  } */
-
   return (
     <div className="flex justify-center">
       <div className="w-full bg-blue-900 rounded-lg shadow-lg h-70">
@@ -34,11 +22,18 @@ export const PerfilComponent = ({ userInfo }: PerfilComponentProps) => {
 
         <div className="flex justify-center mt-[-40px]">
           <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
-            <img
+            {/* <img
               src={userInfo.urlFoto}
               alt="Perfil"
               className="w-20 h-20 object-cover rounded-full"
-            />
+            /> */}
+            {
+              (userInfo.rol === "administrador" && (
+                <ShieldUser className="w-20 h-20 text-orange-400" />
+              ) || (userInfo.rol === "tecnico" && (
+                <User className="w-20 h-20 text-orange-400" />
+              )))
+            }
           </div>
         </div>
 
@@ -66,7 +61,7 @@ export const PerfilComponent = ({ userInfo }: PerfilComponentProps) => {
             <div>
               <span className="font-medium">Teléfono:</span> {userInfo.telefono}
             </div>
-            <div className="sm:col-span-2">
+            <div className="font-medium">
               <span className="font-medium">Dirección:</span> {userInfo.direccion}
             </div>
           </div>

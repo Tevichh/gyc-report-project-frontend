@@ -1,35 +1,66 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import type { UserInfo } from "../../models/userInfo.interface"
-import { PlusCircle, Eye, X } from "lucide-react"
-import { CreateUserComponent } from "./CreateUserComponent"
+import { useEffect, useState } from "react";
+import type { UserInfo } from "../../models/userInfo.interface";
+import { PlusCircle, Eye, X, Pencil, Trash2 } from "lucide-react";
+import { CreateUserComponent } from "./CreateUserComponent";
+import { deleteUserSevice, getAllUsers } from "../../services/userService";
 
-type UsersComponentProps = {
-    users: UserInfo[]
-}
-
-export const UsersComponent = ({ users: initialUsers }: UsersComponentProps) => {
-    const [users, setUsers] = useState<UserInfo[]>(initialUsers)
-    const [isAddingUser, setIsAddingUser] = useState(false)
-
-    const [viewingUser, setViewingUser] = useState<UserInfo | null>(null)
-
+export const UsersComponent = () => {
+    const [users, setUsers] = useState<UserInfo[]>([]);
+    const [isAddingUser, setIsAddingUser] = useState(false);
+    const [editingUser, setEditingUser] = useState<UserInfo | null>(null);
+    const [viewingUser, setViewingUser] = useState<UserInfo | null>(null);
 
     const openUserDetails = (user: UserInfo) => {
-        setViewingUser(user)
-    }
+        setViewingUser(user);
+    };
 
     const closeUserDetails = () => {
-        setViewingUser(null)
-    }
+        setViewingUser(null);
+    };
+
+    const handleCreateOrUpdateUser = () => {
+        setIsAddingUser(false);
+        setEditingUser(null);
+        fetchUsers();
+    };
+
+    const fetchUsers = () => {
+        getAllUsers()
+            .then((data) => {
+                setUsers(data);
+            })
+            .catch((error) => {
+                console.error("Error fetching users:", error);
+            });
+    };
+
+    const deleteUser = (userId: number) => {
+        deleteUserSevice(userId)
+            .then(() => {
+                console.log("Usuario eliminado correctamente");
+                setViewingUser(null);
+                fetchUsers();
+            })
+            .catch((error) => {
+                console.error("Error al eliminar el usuario:", error);
+            });
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, [editingUser, isAddingUser]);
 
     return (
         <div className="w-full bg-white rounded-lg shadow-sm border border-gray-100">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
                 <h2 className="text-xl font-bold">Listado de Usuarios</h2>
                 <button
-                    onClick={() => setIsAddingUser(true)}
+                    onClick={() => {
+                        setIsAddingUser(true);
+                        setEditingUser(null);
+                    }}
                     className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
                 >
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -57,18 +88,37 @@ export const UsersComponent = ({ users: initialUsers }: UsersComponentProps) => 
                                 </tr>
                             ) : (
                                 users.map((user, index) => (
-                                    <tr key={user.id || index} className="border-b border-gray-100 hover:bg-gray-50">
+                                    <tr
+                                        key={user.id || index}
+                                        className="border-b border-gray-100 hover:bg-gray-50"
+                                    >
                                         <td className="px-4 py-3">{user.nombres}</td>
                                         <td className="px-4 py-3">{user.apellidos}</td>
                                         <td className="px-4 py-3">{user.cargo || "-"}</td>
                                         <td className="px-4 py-3">{user.telefono || "-"}</td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-4 py-3 text-right space-x-2">
                                             <button
                                                 onClick={() => openUserDetails(user)}
                                                 className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors"
                                             >
                                                 <Eye className="h-4 w-4 mr-1" />
                                                 Ver
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingUser(user);
+                                                    setIsAddingUser(true);
+                                                }}
+                                                className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors"
+                                            >
+                                                <Pencil className="h-4 w-4 mr-1" />
+                                                Editar
+                                            </button>
+                                            <button
+                                                onClick={() => deleteUser(parseInt(user.id))}
+                                                className="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm text-red-500 hover:bg-red-50 transition-colors">
+                                                <Trash2 className="h-4 w-4 mr-1" />
+                                                Eliminar
                                             </button>
                                         </td>
                                     </tr>
@@ -79,47 +129,50 @@ export const UsersComponent = ({ users: initialUsers }: UsersComponentProps) => 
                 </div>
             </div>
 
-            <CreateUserComponent/>
+            <CreateUserComponent
+                isOpen={isAddingUser}
+                setIsOpen={setIsAddingUser}
+                onSubmitUser={handleCreateOrUpdateUser}
+                initialData={editingUser}
+                onClose={() => setEditingUser(null)}
+            />
 
-            {/* Modal para ver detalles del usuario */}
             {viewingUser && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md mx-4">
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                            <h3 className="text-lg font-semibold">Información del Usuario</h3>
-                            <button onClick={closeUserDetails} className="text-gray-500 hover:text-gray-700">
-                                <X className="h-5 w-5" />
-                            </button>
+                <div className="fixed inset-0 bg-gray-200 bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-fade-in">
+                        <h3 className="text-2xl font-bold mb-4 text-gray-800">👤 Detalles del Usuario</h3>
+                        <div className="space-y-3">
+                            <div className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                                <p className="text-sm text-gray-500">Nombres</p>
+                                <p className="font-medium text-gray-800">{viewingUser.nombres}</p>
+                            </div>
+                            <div className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                                <p className="text-sm text-gray-500">Apellidos</p>
+                                <p className="font-medium text-gray-800">{viewingUser.apellidos}</p>
+                            </div>
+                            <div className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                                <p className="text-sm text-gray-500">Cargo</p>
+                                <p className="font-medium text-gray-800">{viewingUser.cargo || "-"}</p>
+                            </div>
+                            <div className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                                <p className="text-sm text-gray-500">Teléfono</p>
+                                <p className="font-medium text-gray-800">{viewingUser.telefono || "-"}</p>
+                            </div>
+                            <div className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                                <p className="text-sm text-gray-500">Email</p>
+                                <p className="font-medium text-gray-800">{viewingUser.email}</p>
+                            </div>
                         </div>
-                        <div className="p-4 space-y-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <span className="font-medium">Nombres:</span>
-                                <span className="col-span-3">{viewingUser.nombres}</span>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <span className="font-medium">Apellidos:</span>
-                                <span className="col-span-3">{viewingUser.apellidos}</span>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <span className="font-medium">Email:</span>
-                                <span className="col-span-3">{viewingUser.cargo || "-"}</span>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <span className="font-medium">Teléfono:</span>
-                                <span className="col-span-3">{viewingUser.telefono || "-"}</span>
-                            </div>
-                        </div>
-                        <div className="flex justify-end p-4 border-t border-gray-100">
-                            <button
-                                onClick={closeUserDetails}
-                                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                            >
-                                Cerrar
-                            </button>
-                        </div>
+                        <button
+                            onClick={closeUserDetails}
+                            className="mt-6 w-full px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors flex justify-center items-center"
+                        >
+                            <X className="h-4 w-4 mr-2" />
+                            Cerrar
+                        </button>
                     </div>
                 </div>
             )}
         </div>
-    )
-}
+    );
+};
