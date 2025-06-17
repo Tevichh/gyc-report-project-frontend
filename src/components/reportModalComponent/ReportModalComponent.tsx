@@ -2,8 +2,33 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { FolderPlus, TimerOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LocationMap } from "./LocationMap";
-import { FormValues, ReportModalProps } from "../../models/report.interface";
+import { createReportService } from "../../services/reportService";
 
+interface EquipoIntervenido {
+  equipo: string;
+  serial: string;
+  tipo: string;
+  nuevoSerial?: string;
+}
+
+interface FormValues {
+  ticket: string;
+  sistema: string;
+  zona: string;
+  locacion: string;
+  cliente: string;
+  nombrePunto: string;
+  descripcion: string;
+  equipos: EquipoIntervenido[];
+  evidencias: FileList | null;
+}
+
+interface ReportModalProps {
+  edit: boolean;
+  isOpen: boolean;
+  handleModal: () => void;
+  report?: any;
+}
 
 export const ReportModalComponent = ({
   edit,
@@ -12,6 +37,8 @@ export const ReportModalComponent = ({
   report
 }: ReportModalProps) => {
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+
   const {
     register,
     handleSubmit,
@@ -28,9 +55,14 @@ export const ReportModalComponent = ({
       cliente: report?.cliente || "",
       nombrePunto: report?.nombrePunto || "",
       descripcion: report?.descripcion || "",
-      equipos: [{ equipo: "", serial: "", cambio: false, mantenimiento: false, suministroRetiro: false }],
+      equipos: report?.equipos || [{ equipo: "", serial: "", tipo: "", nuevoSerial: "" }],
       evidencias: null
     }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "equipos"
   });
 
   useEffect(() => {
@@ -38,42 +70,55 @@ export const ReportModalComponent = ({
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const locationString = `Lat: ${latitude}, Lon: ${longitude}`;
-
           setCoords({ lat: latitude, lon: longitude });
-
-          reset({
-            ticket: report?.NoTicket || "",
-            sistema: report?.sistema || "",
-            zona: report?.zona || "",
-            locacion: report?.locacion || locationString,
-            cliente: report?.cliente || "",
-            nombrePunto: report?.nombrePunto || "",
-            descripcion: report?.descripcion || "",
-            equipos: report?.equipos || [{ equipo: "", serial: "", cambio: false, mantenimiento: false, suministroRetiro: false }],
-            evidencias: null
-          });
         },
         (error) => {
           console.error("Error obtaining location:", error);
         }
       );
-    } else {
-      console.warn("Geolocation is not supported by this browser.");
     }
-  }, [report, reset]);
-
-
-  const { fields, append } = useFieldArray({
-    control,
-    name: "equipos"
-  });
-
-  const evidencias = watch("evidencias");
+  }, []);
 
   const onSubmit = (data: FormValues) => {
+    const fechaInicio = new Date().toISOString(); // O el valor real
+    const fechafin = new Date().toISOString();    // O el valor real
+    const id = localStorage.getItem("userId")
+    const idTecnicoResponsable = parseInt(id || "0");
+
+    const body = {
+      reportParams: {
+        fechaInicio,
+        fechafin,
+        tipoActividad: "Mantenimiento preventivo",
+        NoTicket: data.ticket,
+        sistema: data.sistema,
+        zona: data.zona,
+        locacion: data.locacion,
+        cliente: data.cliente,
+        nombrePunto: data.nombrePunto,
+        descripcionSolicitud: data.descripcion,
+        descripcionActividad: data.descripcion,
+        SolucionoRequimiento: true,
+        nuevaIntervencion: false,
+        estado: "Finalizado",
+        idTecnicoResponsable
+      },
+      equiposIntervenidos: data.equipos.map((e) => ({
+        equipo: e.equipo,
+        serial: e.serial,
+        estado: e.tipo.charAt(0).toUpperCase() + e.tipo.slice(1),  // Capitaliza
+        serialAnterior: e.tipo === "cambio" ? e.nuevoSerial : ""
+      })),
+      anexosFotograficos: selectedImages.map((file) => ({
+        url: URL.createObjectURL(file) // En la práctica: reemplaza con URL real tras subir
+      }))
+    };
+
+    console.log("Body a enviar:", body);
+
+    createReportService(body)
+
     handleModal();
-    console.log("Formulario:", data);
   };
 
   function resetModal() {
@@ -85,10 +130,10 @@ export const ReportModalComponent = ({
       cliente: "",
       nombrePunto: "",
       descripcion: "",
-      equipos: [{ equipo: "", serial: "", cambio: false, mantenimiento: false, suministroRetiro: false }],
+      equipos: [{ equipo: "", serial: "", tipo: "", nuevoSerial: "" }],
       evidencias: null
     });
-
+    setSelectedImages([]);
     handleModal();
   }
 
@@ -155,36 +200,64 @@ export const ReportModalComponent = ({
               <hr className="col-span-2" />
 
               {fields.map((field, index) => {
-                const cambio = watch(`equipos.${index}.cambio`);
+                const tipoSeleccionado = watch(`equipos.${index}.tipo`);
                 return (
                   <div key={field.id} className="col-span-2 border p-3 rounded bg-gray-50 mb-2">
                     <div className="grid grid-cols-2 gap-2">
                       <input
-                        {...register(`equipos.${index}.equipo` as const)}
+                        {...register(`equipos.${index}.equipo`, { required: true })}
                         placeholder="Equipo"
                         className="p-2 text-sm border border-gray-300 rounded-lg"
                       />
                       <input
-                        {...register(`equipos.${index}.serial` as const)}
+                        {...register(`equipos.${index}.serial`, { required: true })}
                         placeholder="Serial"
                         className="p-2 text-sm border border-gray-300 rounded-lg"
                       />
                     </div>
+                    {errors.equipos?.[index]?.equipo && (
+                      <span className="text-xs text-red-500">El equipo es obligatorio</span>
+                    )}
+                    {errors.equipos?.[index]?.serial && (
+                      <span className="text-xs text-red-500">El serial es obligatorio</span>
+                    )}
+
                     <div className="flex flex-wrap gap-4 mt-2">
-                      {["cambio", "mantenimiento", "suministroRetiro"].map((fieldName) => (
-                        <label key={fieldName} className="flex items-center gap-1 text-sm">
-                          <input type="checkbox" {...register(`equipos.${index}.${fieldName}` as const)} />
-                          {fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
+                      {["no_Aplica", "cambio", "mantenimiento", "suministro_Retiro"].map((tipo) => (
+                        <label key={tipo} className="flex items-center gap-1 text-sm">
+                          <input
+                            type="radio"
+                            value={tipo}
+                            {...register(`equipos.${index}.tipo`, { required: true })}
+                          />
+                          {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
                         </label>
                       ))}
                     </div>
-                    {cambio && (
-                      <input
-                        {...register(`equipos.${index}.nuevoSerial` as const)}
-                        placeholder="Nuevo Serial"
-                        className="w-full mt-2 p-2 text-sm border border-gray-300 rounded-lg"
-                      />
+                    {errors.equipos?.[index]?.tipo && (
+                      <span className="text-xs text-red-500">Debe seleccionar un tipo</span>
                     )}
+
+                    {tipoSeleccionado === "cambio" && (
+                      <>
+                        <input
+                          {...register(`equipos.${index}.nuevoSerial`, { required: true })}
+                          placeholder="Nuevo Serial"
+                          className="w-full mt-2 p-2 text-sm border border-gray-300 rounded-lg"
+                        />
+                        {errors.equipos?.[index]?.nuevoSerial && (
+                          <span className="text-xs text-red-500">El nuevo serial es obligatorio</span>
+                        )}
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="mt-2 text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Eliminar equipo
+                    </button>
                   </div>
                 );
               })}
@@ -192,7 +265,9 @@ export const ReportModalComponent = ({
               <div className="col-span-2">
                 <button
                   type="button"
-                  onClick={() => append({ equipo: "", serial: "", cambio: false, mantenimiento: false, suministroRetiro: false })}
+                  onClick={() =>
+                    append({ equipo: "", serial: "", tipo: "", nuevoSerial: "" })
+                  }
                   className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded hover:bg-blue-200 text-sm"
                 >
                   + Agregar equipo intervenido
@@ -205,59 +280,76 @@ export const ReportModalComponent = ({
                   type="file"
                   multiple
                   accept="image/*"
-                  {...register("evidencias")}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setSelectedImages(files);
+                  }}
                   className="w-full p-2 text-sm border border-gray-300 rounded-lg"
                 />
-                {evidencias && evidencias.length > 0 && (
+                {selectedImages.length === 0 && (
+                  <span className="text-xs text-red-500">Debe agregar al menos una imagen</span>
+                )}
+
+                {selectedImages.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mt-2">
-                    {Array.from(evidencias).map((file, idx) => (
-                      <img
-                        key={idx}
-                        src={URL.createObjectURL(file)}
-                        alt={`Evidencia ${idx + 1}`}
-                        className="w-full h-24 object-cover rounded border"
-                      />
+                    {selectedImages.map((file, idx) => (
+                      <div key={idx} className="relative">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Evidencia ${idx + 1}`}
+                          className="w-full h-24 object-cover rounded border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = [...selectedImages];
+                            newImages.splice(idx, 1);
+                            setSelectedImages(newImages);
+                          }}
+                          className="absolute top-0 right-0 bg-white text-red-600 rounded-full p-1 shadow"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
 
-            <div className="col-span-2 flex justify-center mt-5">
-              {isOpen && coords && (
-                <div className=" w-[300px] h-[250px] rounded shadow overflow-hidden">
-                  <LocationMap latitude={coords.lat} longitude={coords.lon} />
-                </div>
-              )}
-
-            </div>
-
-
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                type="button"
-                onClick={resetModal}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className={`${edit ? "bg-orange-500 hover:bg-orange-600" : "bg-blue-900 hover:bg-blue-800"
-                  } text-white flex items-center px-4 py-2 rounded-lg`}
-              >
-                {edit ? (
-                  <>
-                    <TimerOff className="mr-2 h-5 w-5" />
-                    Cerrar Reporte
-                  </>
-                ) : (
-                  <>
-                    <FolderPlus className="mr-2 h-5 w-5" />
-                    Guardar Reporte
-                  </>
+              <div className="col-span-2 flex justify-center mt-5">
+                {isOpen && coords && (
+                  <div className="w-[300px] h-[250px] rounded shadow overflow-hidden">
+                    <LocationMap latitude={coords.lat} longitude={coords.lon} />
+                  </div>
                 )}
-              </button>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4 col-span-2">
+                <button
+                  type="button"
+                  onClick={resetModal}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className={`${edit ? "bg-orange-500 hover:bg-orange-600" : "bg-blue-900 hover:bg-blue-800"
+                    } text-white flex items-center px-4 py-2 rounded-lg`}
+                >
+                  {edit ? (
+                    <>
+                      <TimerOff className="mr-2 h-5 w-5" />
+                      Cerrar Reporte
+                    </>
+                  ) : (
+                    <>
+                      <FolderPlus className="mr-2 h-5 w-5" />
+                      Guardar Reporte
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -265,3 +357,16 @@ export const ReportModalComponent = ({
     </div>
   );
 };
+
+
+
+
+
+
+
+
+
+
+
+
+

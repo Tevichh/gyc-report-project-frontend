@@ -66,7 +66,7 @@ function App() {
 
             <Route path="/reports" element={
               <PrivateRoute>
-                <ReportComponent />
+                <ReportComponent isAdmin={user?.rol === "administrador" ? true : false} />
               </PrivateRoute>
             } />
 

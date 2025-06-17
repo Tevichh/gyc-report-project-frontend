@@ -1,12 +1,14 @@
 import { FileText, FolderPlus } from "lucide-react"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TableComponent } from "./TableComponent";
 import { ReportModalComponent } from "../reportModalComponent/ReportModalComponent";
+import { deleteReportService, getReportByIdService, getReportsService } from "../../services/reportService";
 
-export const ReportComponent = () => {
+export const ReportComponent = ({ isAdmin }: { isAdmin: boolean }) => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [rows, setRows] = useState<any[]>([]);
 
 
     const handleModal = () => {
@@ -21,14 +23,38 @@ export const ReportComponent = () => {
     }
     const headers = ["No. TICKET", "Tipo", "Lugar", "Fecha"];
 
-    const rows = [
-        {
-            "No. TICKET": 1,
-            "Tipo": "Reporte 1",
-            "Lugar": "Descripción del reporte 1",
-            "Fecha": "2023-10-01",
+
+    useEffect(() => {
+        if (isAdmin) {
+            const reports = getReportsService();
+            reports.then((data) => {
+                const formattedRows = data.map((report: any) => ({
+                    "id": report.idReporte,
+                    "No. TICKET": report.NoTicket,
+                    "Tipo": report.tipoActividad,
+                    "Lugar": report.locacion,
+                    "Fecha": new Date(report.fechaInicio).toLocaleDateString(),
+                }));
+                setRows(formattedRows);
+            }).catch((error) => {
+                console.error("Error fetching reports:", error);
+            });
+        } else {
+            const userReports = getReportByIdService(localStorage.getItem("userId") || "");
+            userReports.then((data) => {
+                const formattedRows = data.map((report: any) => ({
+                    "id": report.idReporte,
+                    "No. TICKET": report.NoTicket,
+                    "Tipo": report.tipoActividad,
+                    "Lugar": report.locacion,
+                    "Fecha": new Date(report.fechaInicio).toLocaleDateString(),
+                }));
+                setRows(formattedRows);
+            }).catch((error) => {
+                console.error("Error fetching user reports:", error);
+            });
         }
-    ];
+    }, []);
 
     return (
         <div className="reportComponentContainer text-gray-900 p-4 h-150">
@@ -46,13 +72,21 @@ export const ReportComponent = () => {
                 </button>
             </div>
 
-            <TableComponent
-                headers={headers}
-                rows={rows}
-                onView={(row) => console.log("Ver", row)}
-                onDelete={(row) => console.log("Eliminar", row)}
-                onEdit={(row) => console.log("Editar", row)}
-            />
+
+            {rows.length === 0 ? (
+                <div className="text-center text-gray-500 mt-10">
+                    <p>No hay reportes disponibles.</p>
+                </div>
+            ) : (
+                <TableComponent
+                    headers={headers}
+                    rows={rows}
+                    onView={(row) => console.log("Ver", row)}
+                    onDelete={(row) => { deleteReportService(row.id).then(() => alert("Reporte eliminado exitosamente")).catch(error => alert("Error al eliminar el reporte: " + error)) }}
+                    onEdit={(row) => console.log("Editar", row)}
+                />
+            )}
+
 
 
         </div>
