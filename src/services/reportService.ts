@@ -29,6 +29,21 @@ export const getReportByIdService = async (id: string) => {
     return data;
 }
 
+export const getReportByIdAdminService = async (id: string) => {
+    const response = await fetch(`${import.meta.env.VITE_API_REPORTES}/getReportesById/${id}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error("Failed to fetch report data");
+    }
+    const data = await response.json();
+    return data;
+}
+
 export const createReportService = async (dataReport: any) => {
     const response = await fetch(`${import.meta.env.VITE_API_REPORTES}/createReport`, {
         method: "POST",

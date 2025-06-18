@@ -33,19 +33,23 @@ export const CreateUserComponent = ({ isOpen, setIsOpen, onSubmitUser, initialDa
         }
     }, [initialData]);
 
-    const onSubmit = (data: UserInfo) => {
+    const onSubmit = async (data: UserInfo) => {
+        try {
+            if (initialData) {
+                await updateUserService(data);
+            } else {
+                await createUserService(data);
+            }
 
-        onSubmitUser();
-        setIsOpen(false);
-
-        if (initialData) {
-            updateUserService(data);
-        } else {
-            createUserService(data);
+            onSubmitUser();
+            setIsOpen(false);
+            reset();
+        } catch (error) {
+            console.error("Error al guardar el usuario:", error);
+            // Aquí podrías mostrar un mensaje de error al usuario si quieres
         }
-
-        reset();
     };
+
 
     if (!isOpen) return null;
 

@@ -38,7 +38,7 @@ function App() {
     <div className="mainContainer">
 
       {!isLoginPage && <HeaderComponet />}
-      {!isLoginPage && <AsideNavComponent rol={user?.rol || ""} />}
+      {!isLoginPage && <AsideNavComponent/>}
 
       <main className={!isLoginPage ? "mainContent p-4 sm:ml-64" : ""}>
         <div className={!isLoginPage ? "p-4 border-2 border-gray-200 rounded-lg mt-14 h-150" : ""}>
@@ -66,7 +66,7 @@ function App() {
 
             <Route path="/reports" element={
               <PrivateRoute>
-                <ReportComponent isAdmin={user?.rol === "administrador" ? true : false} />
+                <ReportComponent />
               </PrivateRoute>
             } />
 

@@ -1,8 +1,15 @@
 import { CircleUserRound, FileSpreadsheet, LayoutDashboard, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom"
 
-export const AsideNavComponent = ({ rol }: { rol: string }) => {
+export const AsideNavComponent = () => {
     const location = useLocation();
+
+    const [rol, setRol] = useState("tecnico");
+
+    useEffect(() => {
+        setRol(localStorage.getItem("rol") || "tecnico");
+    }, [])
 
     const navItems = [
         {

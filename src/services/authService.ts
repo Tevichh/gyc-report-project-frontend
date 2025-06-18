@@ -16,5 +16,7 @@ export async function login(username: string, password: string): Promise<LoginRe
     const data: LoginResponse = await response.json();
     localStorage.setItem("token", data.token);
     localStorage.setItem("userId", data.userId);
+    localStorage.setItem("rol", data.rol);
+
     return data;
 }

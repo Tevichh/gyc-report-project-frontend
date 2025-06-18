@@ -18,6 +18,7 @@ export const UsersComponent = () => {
 
     const closeUserDetails = () => {
         setViewingUser(null);
+        fetchUsers();
     };
 
     const handleCreateOrUpdateUser = () => {
@@ -37,6 +38,7 @@ export const UsersComponent = () => {
     };
 
     const deleteUser = (userId: number) => {
+        fetchUsers(); // Refresh the user list before deletion
         deleteUserSevice(userId)
             .then(() => {
                 console.log("Usuario eliminado correctamente");
@@ -76,7 +78,7 @@ export const UsersComponent = () => {
                                 <th className="px-4 py-3 text-left font-semibold">Apellidos</th>
                                 <th className="px-4 py-3 text-left font-semibold">Cargo</th>
                                 <th className="px-4 py-3 text-left font-semibold">Teléfono</th>
-                                <th className="px-4 py-3 text-right font-semibold">Acciones</th>
+                                <th className="px-4 py-3 text-center font-semibold">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -96,10 +98,10 @@ export const UsersComponent = () => {
                                         <td className="px-4 py-3">{user.apellidos}</td>
                                         <td className="px-4 py-3">{user.cargo || "-"}</td>
                                         <td className="px-4 py-3">{user.telefono || "-"}</td>
-                                        <td className="px-4 py-3 text-right space-x-2">
+                                        <td className="px-4 py-3 text-center">
                                             <button
                                                 onClick={() => openUserDetails(user)}
-                                                className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors"
+                                                className="inline-flex items-center min-w-[90px] max-w-[90px] justify-center px-3 py-1 m-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors"
                                             >
                                                 <Eye className="h-4 w-4 mr-1" />
                                                 Ver
@@ -109,18 +111,23 @@ export const UsersComponent = () => {
                                                     setEditingUser(user);
                                                     setIsAddingUser(true);
                                                 }}
-                                                className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors"
+                                                className="inline-flex items-center min-w-[90px] max-w-[90px] justify-center px-3 py-1 m-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors"
                                             >
                                                 <Pencil className="h-4 w-4 mr-1" />
                                                 Editar
                                             </button>
                                             <button
-                                                onClick={() => deleteUser(parseInt(user.id))}
-                                                className="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm text-red-500 hover:bg-red-50 transition-colors">
+                                                onClick={() => {
+                                                    deleteUser(parseInt(user.id));
+                                                    alert("Usuario eliminado correctamente");
+                                                }}
+                                                className="inline-flex items-center min-w-[90px] max-w-[90px] justify-center px-3 py-1 m-1 border border-red-300 rounded-md text-sm text-red-500 hover:bg-red-50 transition-colors"
+                                            >
                                                 <Trash2 className="h-4 w-4 mr-1" />
                                                 Eliminar
                                             </button>
                                         </td>
+
                                     </tr>
                                 ))
                             )}

@@ -28,13 +28,15 @@ interface ReportModalProps {
   isOpen: boolean;
   handleModal: () => void;
   report?: any;
+  refreshReports: () => void;
 }
 
 export const ReportModalComponent = ({
   edit,
   isOpen,
   handleModal,
-  report
+  report,
+  refreshReports
 }: ReportModalProps) => {
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -79,7 +81,7 @@ export const ReportModalComponent = ({
     }
   }, []);
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     const fechaInicio = new Date().toISOString(); // O el valor real
     const fechafin = new Date().toISOString();    // O el valor real
     const id = localStorage.getItem("userId")
@@ -116,9 +118,11 @@ export const ReportModalComponent = ({
 
     console.log("Body a enviar:", body);
 
-    createReportService(body)
+    await createReportService(body)
+    refreshReports();
 
     handleModal();
+    resetModal();
   };
 
   function resetModal() {
