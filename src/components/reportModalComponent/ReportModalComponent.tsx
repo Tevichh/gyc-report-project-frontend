@@ -3,6 +3,10 @@ import { FolderPlus, TimerOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LocationMap } from "./LocationMap";
 import { createReportService } from "../../services/reportService";
+import html2canvas from "html2canvas";
+import { useRef } from "react";
+import { uploadReportImages } from "../../services/imagesService";
+
 
 interface EquipoIntervenido {
   equipo: string;
@@ -40,6 +44,8 @@ export const ReportModalComponent = ({
 }: ReportModalProps) => {
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const mapRef = useRef<HTMLDivElement>(null);
+
 
   const {
     register,
@@ -82,9 +88,43 @@ export const ReportModalComponent = ({
   }, []);
 
   const onSubmit = async (data: FormValues) => {
-    const fechaInicio = new Date().toISOString(); // O el valor real
-    const fechafin = new Date().toISOString();    // O el valor real
-    const id = localStorage.getItem("userId")
+    let mapImageBase64 = "";
+    const selectedImagesBase64: { name: string; base64: string }[] = [];
+
+    if (mapRef.current) {
+      mapRef.current.style.color = 'black';
+      mapRef.current.style.background = 'white';
+
+      const canvas = await html2canvas(mapRef.current, {
+        useCORS: true
+      });
+
+      mapImageBase64 = canvas.toDataURL("image/png");
+    }
+
+    // Convertir las imágenes seleccionadas a base64
+    const convertToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve(reader.result as string);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    };
+
+    for (const file of selectedImages) {
+      const base64 = await convertToBase64(file);
+      selectedImagesBase64.push({
+        name: file.name,
+        base64
+      });
+    }
+
+    const fechaInicio = new Date().toISOString();
+    const fechafin = new Date().toISOString();
+    const id = localStorage.getItem("userId");
     const idTecnicoResponsable = parseInt(id || "0");
 
     const body = {
@@ -108,22 +148,37 @@ export const ReportModalComponent = ({
       equiposIntervenidos: data.equipos.map((e) => ({
         equipo: e.equipo,
         serial: e.serial,
-        estado: e.tipo.charAt(0).toUpperCase() + e.tipo.slice(1),  // Capitaliza
+        estado: e.tipo.charAt(0).toUpperCase() + e.tipo.slice(1),
         serialAnterior: e.tipo === "cambio" ? e.nuevoSerial : ""
       })),
-      anexosFotograficos: selectedImages.map((file) => ({
-        url: URL.createObjectURL(file) // En la práctica: reemplaza con URL real tras subir
-      }))
+      anexosFotograficos: [
+        ...selectedImagesBase64.map((img) => ({
+          nombre: img.name,
+          url: img.name // Guardamos el nombre como referencia (el backend debería mapearlo al archivo real)
+        })),
+        ...(mapImageBase64 ? [{ nombre: "mapa.png", url: "mapa.png" }] : [])
+      ]
     };
+
+    // Enviamos imágenes como base64 al servicio
+    await uploadReportImages(
+      body.reportParams.NoTicket,
+      [
+        ...selectedImagesBase64.map((img) => img.base64),
+        ...(mapImageBase64 ? [mapImageBase64] : [])
+      ]
+    );
 
     console.log("Body a enviar:", body);
 
-    await createReportService(body)
+    await createReportService(body);
     refreshReports();
 
     handleModal();
     resetModal();
   };
+
+
 
   function resetModal() {
     reset({
@@ -322,7 +377,9 @@ export const ReportModalComponent = ({
 
               <div className="col-span-2 flex justify-center mt-5">
                 {isOpen && coords && (
-                  <div className="w-[300px] h-[250px] rounded shadow overflow-hidden">
+                  <div
+                    ref={mapRef}
+                    className="w-[300px] h-[250px] rounded shadow overflow-hidden">
                     <LocationMap latitude={coords.lat} longitude={coords.lon} />
                   </div>
                 )}

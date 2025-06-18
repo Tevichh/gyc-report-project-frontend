@@ -4,6 +4,7 @@ import { ReportModalComponent } from "../reportModalComponent/ReportModalCompone
 import { deleteReportService, getReportByIdAdminService, getReportByIdService, getReportsService } from "../../services/reportService";
 import { useEffect, useState } from "react";
 import { generarReportePDF } from "../../services/pdfService";
+import { fetchReportImages } from "../../services/imagesService";
 
 export const ReportComponent = () => {
     const [isEditing, setIsEditing] = useState(false);
@@ -73,9 +74,11 @@ export const ReportComponent = () => {
     const handleView = async (row: any) => {
 
         try {
-            const report = await getReportByIdAdminService(row.id); 
+            const report = await getReportByIdAdminService(row.id);
+            const imagen = await fetchReportImages(report.NoTicket);
             console.log("Ver reporte", report);
-            await generarReportePDF(report);
+            console.log("Imagenes del reporte", imagen);
+            await generarReportePDF(report, imagen);
         } catch (error) {
             console.error("Error al obtener el reporte:", error);
             alert("Error al obtener el reporte: " + error);
