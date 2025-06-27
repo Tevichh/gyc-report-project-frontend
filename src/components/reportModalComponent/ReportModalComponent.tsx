@@ -16,6 +16,8 @@ interface EquipoIntervenido {
 }
 
 interface FormValues {
+  fechaInicio: string;
+  fechafin: string;
   ticket: string;
   sistema: string;
   zona: string;
@@ -56,10 +58,10 @@ export const ReportModalComponent = ({
     formState: { errors }
   } = useForm<FormValues>({
     defaultValues: {
+      fechaInicio: new Date().toISOString(),
       ticket: report?.NoTicket || "",
       sistema: report?.sistema || "",
       zona: report?.zona || "",
-      locacion: report?.locacion || "",
       cliente: report?.cliente || "",
       nombrePunto: report?.nombrePunto || "",
       descripcion: report?.descripcion || "",
@@ -79,6 +81,10 @@ export const ReportModalComponent = ({
         (position) => {
           const { latitude, longitude } = position.coords;
           setCoords({ lat: latitude, lon: longitude });
+          reset({
+            locacion: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`,
+            fechaInicio: new Date().toISOString().slice(0, 16)
+          });
         },
         (error) => {
           console.error("Error obtaining location:", error);
@@ -122,15 +128,15 @@ export const ReportModalComponent = ({
       });
     }
 
-    const fechaInicio = new Date().toISOString();
-    const fechafin = new Date().toISOString();
+    //const fechaInicio = new Date().toISOString();
+    //const fechafin = "";
     const id = localStorage.getItem("userId");
     const idTecnicoResponsable = parseInt(id || "0");
 
     const body = {
       reportParams: {
-        fechaInicio,
-        fechafin,
+        fechaInicio: new Date(data.fechaInicio).toISOString(),
+        fechafin: new Date(data.fechafin).toISOString(),
         tipoActividad: "Mantenimiento preventivo",
         NoTicket: data.ticket,
         sistema: data.sistema,
@@ -182,6 +188,7 @@ export const ReportModalComponent = ({
 
   function resetModal() {
     reset({
+      fechaInicio: new Date().toISOString(),
       ticket: "",
       sistema: "",
       zona: "",
@@ -221,24 +228,74 @@ export const ReportModalComponent = ({
               <hr className="col-span-2" />
               <h3 className="col-span-2 text-center font-medium text-gray-700">INFORMACIÓN INGRESO</h3>
               <hr className="col-span-2" />
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block mb-1 text-sm font-medium text-gray-900">Fecha y hora de inicio</label>
+                <input
+                  type="datetime-local"
+                  {...register("fechaInicio", { required: true })}
+                  className="w-full p-2 text-sm border border-gray-300 rounded-lg"
+                />
+                {errors.fechaInicio && (
+                  <span className="text-xs text-red-500">Este campo es obligatorio</span>
+                )}
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block mb-1 text-sm font-medium text-gray-900">Fecha y hora final</label>
+                <input
+                  type="datetime-local"
+                  {...register("fechafin", { required: true })}
+                  className="w-full p-2 text-sm border border-gray-300 rounded-lg"
+                />
+                {errors.fechafin && (
+                  <span className="text-xs text-red-500">Este campo es obligatorio</span>
+                )}
+              </div>
 
               {[
-                { label: "No. Ticket", name: "ticket" },
-                { label: "Sistema", name: "sistema" },
-                { label: "Zona", name: "zona" },
-                { label: "Locación", name: "locacion" },
-                { label: "Cliente/Proyecto", name: "cliente" },
-                { label: "Nombre del punto", name: "nombrePunto" }
-              ].map(({ label, name }) => (
+                { label: "No. Ticket", name: "ticket", edit: false },
+                { label: "Sistema", name: "sistema", edit: false },
+                { label: "Zona", name: "zona", edit: false },
+                { label: "Locación", name: "locacion", edit: true },
+                { label: "Cliente/Proyecto", name: "cliente", edit: false },
+                { label: "Nombre del punto", name: "nombrePunto", edit: false }
+              ].map(({ label, name, edit }) => (
                 <div key={name} className="col-span-2 sm:col-span-1">
                   <label className="block mb-1 text-sm font-medium text-gray-900">{label}</label>
-                  <input
-                    {...register(name as keyof FormValues, { required: true })}
-                    className="w-full p-2 text-sm border border-gray-300 rounded-lg"
-                  />
-                  {errors[name as keyof FormValues] && (
-                    <span className="text-xs text-red-500">Este campo es obligatorio</span>
+                  {!edit ? (
+                    <>
+                      <input
+                        {...register(name as keyof FormValues, {
+                          required: true,
+                          pattern: {
+                            value: /^[a-zA-Z0-9\s]+$/,
+                            message: "No se permiten caracteres especiales"
+                          }
+                        })}
+                        className="w-full p-2 text-sm border border-gray-300 rounded-lg"
+                        onChange={(e) => {
+                          e.target.value = e.target.value.toUpperCase();
+                        }
+                        }
+
+                      />
+                      {errors[name as keyof FormValues]?.type === "required" && (
+                        <span className="text-xs text-red-500">Este campo es obligatorio</span>
+                      )}
+                      <br />
+                      {errors[name as keyof FormValues]?.type === "pattern" && (
+                        <span className="text-xs text-red-500">{(errors[name as keyof FormValues] as any).message}</span>
+                      )}
+                    </>
+
+                  ) : (
+                    <input
+                      {...register(name as keyof FormValues)}
+                      className="w-full p-2 text-sm border border-gray-300 rounded-lg bg-gray-100"
+                      readOnly
+                    />
                   )}
+
+
                 </div>
               ))}
 
